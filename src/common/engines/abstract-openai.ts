@@ -66,8 +66,8 @@ export abstract class AbstractOpenAI extends AbstractEngine {
             model,
             temperature: 0,
             top_p: 1,
-            frequency_penalty: 1,
-            presence_penalty: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
             stream: true,
         }
     }
