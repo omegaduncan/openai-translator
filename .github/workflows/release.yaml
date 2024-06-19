@@ -227,83 +227,84 @@ jobs:
           asset_name: openai-translator.pbar
           asset_content_type: application/zip
 
-  build-browser-extension:
-    runs-on: ubuntu-22.04
+build-browser-extension:
+  runs-on: ubuntu-22.04
 
-    permissions:
-      contents: write
-      packages: write
+  permissions:
+    contents: write
+    packages: write
 
-    needs: create-release
+  needs: create-release
 
-    steps:
-      - uses: actions/checkout@v4
+  steps:
+    - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.6.0
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 8.6.0
 
-      - name: setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'pnpm'
+    - name: setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'pnpm'
 
-      - name: Get version
-        id: get_version
-        uses: battila7/get-version-action@v2
+    - name: Get version
+      id: get_version
+      uses: battila7/get-version-action@v2
 
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile
 
-      - name: Build browser extension
-        run: make build-browser-extension
-        env:
-          VERSION: "${{ steps.get_version.outputs.version-without-v }}"
+    - name: Build browser extension
+      run: make build-browser-extension
+      env:
+        VERSION: "${{ steps.get_version.outputs.version-without-v }}"
 
-      - name: Build userscript
-        run: make build-userscript
-        env:
-          VERSION: "${{ steps.get_version.outputs.version-without-v }}"
+    - name: Build userscript
+      run: make build-userscript
+      env:
+        VERSION: "${{ steps.get_version.outputs.version-without-v }}"
 
-      - name: Package plugin and create userscript
-        run: |
-          mkdir release
-          mv dist/browser-extension/*.zip release/
-          mv dist/openai-translator.user.js release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
+    - name: Package plugin and create userscript
+      run: |
+        mkdir release
+        mv dist/browser-extension/*.zip release/
+        mv dist/openai-translator.user.js release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
 
-      - name: Upload Chromium extensions to release
-        id: upload-chromium-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.release_upload_url }}
-          asset_path: release/chromium.zip
-          asset_name: openai-translator-chromium-extension-${{ steps.get_version.outputs.version-without-v }}.zip
-          asset_content_type: application/zip
+    - name: Upload Chromium extensions to release
+      id: upload-chromium-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+        asset_path: release/chromium.zip
+        asset_name: openai-translator-chromium-extension-${{ steps.get_version.outputs.version-without-v }}.zip
+        asset_content_type: application/zip
 
-      - name: Upload Firefox extensions to release
-        id: upload-firefox-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.release_upload_url }}
-          asset_path: release/firefox.zip
-          asset_name: openai-translator-firefox-extension-${{ steps.get_version.outputs.version-without-v }}.xpi
-          asset_content_type: application/zip
+    - name: Upload Firefox extensions to release
+      id: upload-firefox-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+        asset_path: release/firefox.zip
+        asset_name: openai-translator-firefox-extension-${{ steps.get_version.outputs.version-without-v }}.zip
+        asset_content_type: application/zip
 
-      - name: Upload userscript to release
-        id: upload-userscript-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.release_upload_url }}
-          asset_path: release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
-          asset_name: openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
-          asset_content_type: application/javascript
+    - name: Upload userscript to release
+      id: upload-userscript-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.release_upload_url }}
+        asset_path: release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
+        asset_name: openai-translator-${{ steps.get_version.outputs.version-without-v }}.user.js
+        asset_content_type: application/javascript
+
 
   publish-release:
     permissions:
