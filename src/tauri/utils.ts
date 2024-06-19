@@ -1,7 +1,8 @@
 import { isRegistered, register, unregister } from '@tauri-apps/plugin-global-shortcut'
-import { invoke } from '@tauri-apps/api/core'
 import { getSettings } from '@/common/utils'
 import { sendNotification } from '@tauri-apps/plugin-notification'
+import { commands, events } from './bindings'
+import { ISettings } from '@/common/types'
 
 const modifierKeys = [
     'OPTION',
@@ -44,7 +45,7 @@ export async function bindHotkey(oldHotKey?: string) {
         await unregister(settings.hotkey)
     }
     await register(settings.hotkey, () => {
-        invoke('show_translator_window_with_selected_text_command')
+        return commands.showTranslatorWindowWithSelectedTextCommand()
     }).then(() => {
         console.log('register hotkey success')
     })
@@ -67,7 +68,7 @@ export async function bindDisplayWindowHotkey(oldHotKey?: string) {
         await unregister(settings.displayWindowHotkey)
     }
     await register(settings.displayWindowHotkey, () => {
-        invoke('show_translator_window_command')
+        commands.showTranslatorWindowCommand()
     }).then(() => {
         console.log('register display window hotkey success')
     })
@@ -90,7 +91,7 @@ export async function bindOCRHotkey(oldOCRHotKey?: string) {
         await unregister(settings.ocrHotkey)
     }
     await register(settings.ocrHotkey, () => {
-        invoke('ocr_command')
+        return commands.startOcr()
     }).then(() => {
         console.log('OCR hotkey registered')
     })
@@ -113,8 +114,16 @@ export async function bindWritingHotkey(oldWritingHotKey?: string) {
         await unregister(settings.writingHotkey)
     }
     await register(settings.writingHotkey, () => {
-        invoke('writing_command')
+        return commands.writingCommand()
     }).then(() => {
         console.log('writing hotkey registered')
     })
+}
+
+export function onSettingsSave(oldSettings: ISettings) {
+    events.configUpdatedEvent.emit()
+    bindHotkey(oldSettings.hotkey)
+    bindDisplayWindowHotkey(oldSettings.displayWindowHotkey)
+    bindOCRHotkey(oldSettings.ocrHotkey)
+    bindWritingHotkey(oldSettings.writingHotkey)
 }
