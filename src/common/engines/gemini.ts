@@ -1,8 +1,10 @@
 /* eslint-disable camelcase */
+import { urlJoin } from 'url-join-ts'
 import { getUniversalFetch } from '../universal-fetch'
 import { fetchSSE, getSettings } from '../utils'
 import { AbstractEngine } from './abstract-engine'
 import { IMessageRequest, IModel } from './interfaces'
+import qs from 'qs'
 
 const SAFETY_SETTINGS = [
     {
@@ -31,7 +33,9 @@ export class Gemini extends AbstractEngine {
         }
         const settings = await getSettings()
         const geminiAPIURL = settings.geminiAPIURL
-        const url = `${geminiAPIURL}/v1beta/models?key=${apiKey}&pageSize=1000`
+        const url =
+            urlJoin(geminiAPIURL, '/v1beta/models') +
+            qs.stringify({ key: apiKey, pageSize: 1000 }, { addQueryPrefix: true })
         const fetcher = getUniversalFetch()
         const resp = await fetcher(url, {
             method: 'GET',
@@ -63,7 +67,9 @@ export class Gemini extends AbstractEngine {
         const apiKey = settings.geminiAPIKey
         const geminiAPIURL = settings.geminiAPIURL
         const model = await this.getModel()
-        const url = `${geminiAPIURL}/v1beta/models/${model}:streamGenerateContent?key=${apiKey}`
+        const url =
+            urlJoin(geminiAPIURL, '/v1beta/models/', `${model}:streamGenerateContent`) +
+            qs.stringify({ key: apiKey }, { addQueryPrefix: true })
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent':
@@ -75,49 +81,12 @@ export class Gemini extends AbstractEngine {
                     role: 'user',
                     parts: [
                         {
-                            text: 'Hello.',
-                        },
-                    ],
-                },
-                {
-                    role: 'model',
-                    parts: [
-                        {
-                            text: req.rolePrompt,
-                        },
-                    ],
-                },
-                {
-                    role: 'user',
-                    parts: [
-                        {
-                            text: req.commandPrompt,
+                            text: req.rolePrompt ? req.rolePrompt + '\n\n' + req.commandPrompt : req.commandPrompt,
                         },
                     ],
                 },
             ],
             safetySettings: SAFETY_SETTINGS,
-        }
-
-        if (req.assistantPrompts) {
-            req.assistantPrompts.forEach((prompt) => {
-                body.contents.push({
-                    role: 'model',
-                    parts: [
-                        {
-                            text: 'Ok.',
-                        },
-                    ],
-                })
-                body.contents.push({
-                    role: 'user',
-                    parts: [
-                        {
-                            text: prompt,
-                        },
-                    ],
-                })
-            })
         }
 
         let hasError = false

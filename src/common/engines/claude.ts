@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { urlJoin } from 'url-join-ts'
 import { CUSTOM_MODEL_ID } from '../constants'
 import { fetchSSE, getSettings } from '../utils'
 import { AbstractEngine } from './abstract-engine'
@@ -21,6 +22,14 @@ export class Claude extends AbstractEngine {
     async listModels(apiKey_: string | undefined): Promise<IModel[]> {
         return Promise.resolve([
             {
+                id: 'claude-3-5-sonnet-20240620',
+                name: 'claude-3-5-sonnet-20240620',
+            },
+            {
+                id: 'claude-3-sonnet-20240229',
+                name: 'claude-3-sonnet-20240229',
+            },
+            {
                 id: 'claude-3-opus-20240229',
                 name: 'claude-3-opus-20240229',
             },
@@ -31,12 +40,13 @@ export class Claude extends AbstractEngine {
         const settings = await getSettings()
         const apiKey = settings.claudeAPIKey
         const model = await this.getModel()
-        const url = `${settings.claudeAPIURL}${settings.claudeAPIURLPath}`
+        const url = urlJoin(settings.claudeAPIURL, settings.claudeAPIURLPath)
         const headers = {
             'Content-Type': 'application/json',
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41',
             'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
             'anthropic-beta': 'messages-2023-12-15',
             'x-api-key': apiKey,
         }
@@ -44,22 +54,11 @@ export class Claude extends AbstractEngine {
             model,
             stream: true,
             max_tokens: 4096,
+            temperature: 0,
             messages: [
                 {
                     role: 'user',
-                    content: req.rolePrompt,
-                },
-                {
-                    role: 'assistant',
-                    content: 'Ok, I will do that.',
-                },
-                {
-                    role: 'user',
-                    content: req.commandPrompt,
-                },
-                {
-                    role: 'assistant',
-                    content: 'Ok, the result is:',
+                    content: req.rolePrompt ? req.rolePrompt + '\n\n' + req.commandPrompt : req.commandPrompt,
                 },
             ],
         }
